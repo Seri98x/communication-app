@@ -25,3 +25,10 @@
 #container a {
   text-decoration: none;
 }
+
+.card-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20rem;
+}

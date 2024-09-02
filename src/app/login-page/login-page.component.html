@@ -1,0 +1,23 @@
+<ion-content [fullscreen]="true">
+
+
+  <form [formGroup]="loginForm" (ngSubmit)="login()">
+    <div class="login-container">
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Login</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-input formControlName="email" type="text" label="E-mail" label-placement="floating" fill="outline" placeholder="E-mail"></ion-input>
+          <ion-input formControlName="password" type="password" label="Password" label-placement="floating" fill="outline" placeholder="Password">
+            <ion-input-password-toggle slot="end"></ion-input-password-toggle>
+          </ion-input>
+          <ion-button [disabled]="!loginForm.valid" expand="block" type="submit" color="primary" (click)="login()">Login</ion-button>
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+  </form>
+
+
+</ion-content>

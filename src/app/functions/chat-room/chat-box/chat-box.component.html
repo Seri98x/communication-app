@@ -1,0 +1,52 @@
+
+
+<ion-label text-wrap [slot]=" chat?.sender_id == current_user_id? 'end' : 'start'" class="ion-text-wrap"  [ngStyle]="{ 'text-align': chat?.sender_id === current_user_id ? 'end' : 'start','padding-right': chat?.sender_id === current_user_id ? '90px' : '0' , 'padding-left': chat?.sender_id !== current_user_id ? '20px' : '0' }">
+
+  @if (chat.sender_id == current_user_id)
+{
+  <ion-text >You</ion-text>
+}
+@else if (chat.sender_id !== current_user_id) {
+  <ion-text>{{chat.sender_name}}</ion-text>
+}
+
+</ion-label>
+<div>
+  <ion-item lines="none"
+  [class]="chat?.sender_id != current_user_id ? 'user' : 'sender'">
+
+  <ion-label text-wrap [slot]=" chat?.sender_id == current_user_id? 'end' : 'start'" class="ion-text-wrap">
+
+      <ion-text>{{chat?.message_content}}</ion-text>
+
+      @if (isImage)
+      {
+        <br>
+         <a target="_blank" [href]="chat?.file_url"><img [src]="chat?.file_url"  alt="image" style="width: 20%;"></a>
+
+      }
+
+      @else
+      {
+        <br>
+        <ion-button (click)="downloadFile(chat?.file_url)">
+          <ion-text style="color: gold;">Attached File:</ion-text>
+        </ion-button>
+        
+      
+      }
+
+
+    <ion-note> &nbsp;
+      <small>{{(chat?.timestamp)?.toDate() | date: 'HH:mm'}}</small>
+      <ion-icon [color]="chat?.sender_id == current_user_id ? 'light' :'primary'"></ion-icon>
+    </ion-note>
+  </ion-label>
+
+
+
+
+
+
+</ion-item>
+</div>

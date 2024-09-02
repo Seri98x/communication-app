@@ -1,0 +1,58 @@
+<ion-header >
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home">
+      </ion-back-button>
+    </ion-buttons>
+    <ion-title>Chat with Admin</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" [scrollEvents]="true">
+ <ion-list
+ lines="none"
+ >
+ <ion-item-group class="chats-group">
+
+  @for (message of messages; track message) 
+  {
+    <app-chat-box [chat]="message" [current_user_id]="currentUserId"></app-chat-box>
+  }
+ 
+
+ </ion-item-group>
+
+ </ion-list>
+  
+</ion-content>
+
+<ion-footer>
+  @if (isAttached) 
+  {
+    <ion-label>You've attached: {{fileName}}</ion-label>
+  }
+ 
+  <ion-toolbar>
+    <ion-textarea 
+    autoGrow rows="1" 
+    placeholder="Send message" 
+    class="ion-text-center"
+    [(ngModel)]='message'
+    >
+    </ion-textarea>
+    <ion-buttons slot="end">
+      <ion-fab-button size="small" color="primary" (click)="sendMessage()">
+           <ion-icon name="send">
+
+           </ion-icon>
+      </ion-fab-button>
+      <input type="file" #fileInput (change)="onFileSelected($event)" style="display: none;" />
+
+      <ion-fab-button size="small" color="primary" (click)="fileInput.click()">
+
+        <ion-icon name="attach-outline"></ion-icon>
+
+      </ion-fab-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-footer>

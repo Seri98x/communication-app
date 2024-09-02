@@ -1,0 +1,48 @@
+.sender {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+    
+    ion-label {
+        background-color: #0854ec;
+        padding: 10px;
+        border-radius: 10px;
+        max-width: 70%;
+        word-wrap: break-word;
+           
+        
+        color: white;
+    }
+
+    ion-note {
+   
+            color: whitesmoke;
+        
+    }
+}
+
+.user {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+    ion-label {
+        background-color: #f4f4f4;
+        padding: 10px;
+        border-radius: 10px;
+        max-width: 70%;
+        word-wrap: break-word;
+        color: black;
+    }
+
+    
+}
+
+
+/* chat.component.scss */
+.text-align-end {
+    text-align: end; /* Aligns text to the end */
+  }
+  .text-align-start {
+    text-align: start; /* Aligns text to the start */
+  }
+  
