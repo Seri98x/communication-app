@@ -1,0 +1,7 @@
+{
+  "name": "communication-app",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
