@@ -1,3 +1,64 @@
-<p>
-  email-session works!
-</p>
+<ion-header>
+    <ion-toolbar color="primary">
+      <ion-buttons slot="start">
+        <ion-back-button defaultHref="/home"></ion-back-button>
+      </ion-buttons>
+      <ion-title>Email</ion-title>
+    </ion-toolbar>
+  </ion-header>
+  
+  <ion-content [fullscreen]="true">
+    <ion-grid>
+      <ion-row>
+        <ion-col size="12" size-md="4">
+          <ion-card style="height: 500px; overflow: auto;">
+            <ion-card-header>
+              <ion-card-title class="ion-text-center ion-text-part">Inbox</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <ion-list>
+                <ion-item button *ngFor="let message of messages" (click)="openEmail(message)">
+                  <ion-label>
+                    <h2>{{ message.subject }}</h2>
+                    <p><strong>From:</strong> {{ message.sender }}</p>
+                    <p><strong>Date:</strong> {{ message.date }}</p>
+                  </ion-label>
+                </ion-item>
+              </ion-list>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+        <ion-col size="12" size-md="8">
+          <ion-card style="height: 100vh;">
+            <ion-card-header>
+              <ion-card-title>Compose Email</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <div class="main-wrapper">
+                <div class="button-wrapper">
+                  <ion-button style="margin-right: 2rem;" shape="round" size="large" fill="solid" color="primary" (click)="clearEmail()">Compose</ion-button>
+                  <ion-button shape="round" size="large" fill="solid" color="danger" (click)="clearEmail()">Clear</ion-button>
+                </div>
+  
+                <div class="main-body-wrapper">
+                  <ion-label>
+                    <ion-text>New Message</ion-text>
+                  </ion-label>
+                  <ion-input [(ngModel)]="email.to" style="margin-bottom: 1.5rem;" type="text" label="To" label-placement="floating" fill="outline" placeholder="To"></ion-input>
+                  <ion-input [(ngModel)]="email.subject" style="margin-bottom: 1.5rem;" type="text" label="Subject" label-placement="floating" fill="outline" placeholder="Subject"></ion-input>
+                  <ion-textarea [(ngModel)]="email.message" style="height: 50vh;" label="Message" labelPlacement="floating" fill="outline" placeholder="Message"></ion-textarea>
+  
+                  <div class="button-wrapper-footer">
+                    <input type="file" (change)="onFileSelected($event)" #fileInput style="display: none;" />
+                    <ion-button shape="round" size="large" fill="solid" color="primary" (click)="fileInput.click()" style="padding-right: 3rem;">Add Attachment</ion-button>
+                    <ion-button shape="round" size="large" fill="solid" color="primary" (click)="sendEmail()">Send</ion-button>
+                  </div>
+                </div>
+              </div>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </ion-content>
+  

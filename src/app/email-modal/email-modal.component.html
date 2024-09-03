@@ -1,0 +1,36 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Email Details</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>{{ email.subject }}</ion-card-title>
+      <ion-card-subtitle>From: {{ email.sender }}</ion-card-subtitle>
+      <ion-card-subtitle>Date: {{ email.date }}</ion-card-subtitle>
+    </ion-card-header>
+    <ion-card-content>
+      <!-- Render HTML content safely -->
+      <div [innerHTML]="email.body"></div>
+      
+      <ion-list>
+        <ion-item *ngFor="let attachment of email.attachments">
+          <ion-label>
+            <h3>{{ attachment.filename }}</h3>
+            <p><strong>Type:</strong> {{ attachment.mimeType }}</p>
+            <!-- Create a downloadable link for the attachment -->
+            <a [href]="getAttachmentUrl(attachment.data, attachment.filename)"
+               download="{{ attachment.filename }}">
+              Download
+            </a>
+          </ion-label>
+        </ion-item>
+      </ion-list>
+    </ion-card-content>
+  </ion-card>
+</ion-content>

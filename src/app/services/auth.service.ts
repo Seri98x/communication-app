@@ -14,6 +14,8 @@ export class AuthService {
   public _uid = new BehaviorSubject<any>(null);  
   public _role_id = new BehaviorSubject<any>(null);
   public _user_name = new BehaviorSubject<any>(null);
+  public _bearer_token = new BehaviorSubject<any>(null);
+  public _email = new BehaviorSubject<any>(null); 
 
   constructor(    private apiService: ApiService,private fireStore:Firestore,    private fireAuth: Auth) { }
 
@@ -25,7 +27,16 @@ export class AuthService {
         {
           this._role_id.next(user.role_id);
           this._user_name.next(user.name);
+          if(email  == "jose.m.ronquillo@gmail.com"){
+            this._bearer_token.next("ya29.a0AcM612xJjUmvYYAZI4AKP6UbjOS267c-KjL76kvdyjK_PErICyzMBcnEB-tij-8Cen5lzpqCrUCcXq-f4dSx_1ISZ2OLBdxUU-zx-siS307YzV2Vp9FCW63MTO5yijLyX5FZU7DDCpk6TLzUISRXkehC7rKEyFMf90uz3uYaoQaCgYKAXMSARISFQHGX2MiKart7kFSdDQCReikSFVEvQ0177");
+          }
+          else if(email == "josemarironquillo91@gmai.com")
+            {
+              this._bearer_token.next("ya29.a0AcM612zkC3K9wa-m80COWyhtqm43F7OkDVze8fGbd3vg0b88NXUvoBMVv4rvdcB2NF-30ibRhpdtdDAZTc5HmaJsRWsrYuHJYcf7nrPCFZglN4BTjXvwaCbo3lHJJCcLQfiywSsFpvc9DD-A-cBeCmX5FrQYm8nrLVNilOZBaCgYKAVASARESFQHGX2MiCR7IWwiQmyop5XTrXgOL4A0175");
+            }
         });
+        this._email.next(email);
+        
     }
   }
 

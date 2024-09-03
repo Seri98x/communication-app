@@ -22,11 +22,11 @@
       @if (isImage)
       {
         <br>
-         <a target="_blank" [href]="chat?.file_url"><img [src]="chat?.file_url"  alt="image" style="width: 20%;"></a>
+         <a  [href]="chat?.file_url"><img [src]="chat?.file_url" target="_blank" alt="image" style="width: 150px;"></a>
 
       }
 
-      @else
+      @else if (chat?.file_url)
       {
         <br>
         <ion-button (click)="downloadFile(chat?.file_url)">

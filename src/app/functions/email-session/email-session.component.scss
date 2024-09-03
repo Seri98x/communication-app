@@ -1,0 +1,36 @@
+.ion-text-part {
+   background: #f4f4f4;
+   border-radius: 15px;
+   display:inline-block;
+}
+
+.main-body-wrapper {
+    display: flex;
+    flex-direction: column;
+    margin-top: 2rem;
+    padding: 1rem;
+
+    ion-label {
+        ion-text{
+            font-size: 3rem;
+            font-weight: 500;
+        }
+    }
+
+}
+
+ion-card.inbox-card {
+    height: 500px; /* Adjust as needed */
+    overflow: hidden;
+  }
+  
+  ion-card-content.inbox-content {
+    height: 100%;
+    overflow-y: auto; /* Enables vertical scrolling */
+  }
+  
+  /* Optional: Make sure the card content doesn't overflow its container */
+  ion-card-content {
+    box-sizing: border-box;
+  }
+  

@@ -13,17 +13,18 @@ export const routes: Routes = [
     pathMatch: 'full',
   },
   {
-    path: 'home/chat',
-    loadComponent: () => import('./functions/chat-room/chat-room.component').then((m) => m.ChatRoomComponent),
-    canMatch:[authGuard],
-  },
-  {
-    path: 'home/email/',
+    path: 'home/email',
     loadComponent: () => import('./functions/email-session/email-session.component').then((m) => m.EmailSessionComponent),
     canMatch:[authGuard],
   },
   {
-    path: 'home/sms/',
+    path: 'home/chat',
+    loadComponent: () => import('./functions/chat-room/chat-room.component').then((m) => m.ChatRoomComponent),
+    canMatch:[authGuard],
+  },
+
+  {
+    path: 'home/sms',
     loadComponent: () => import('./functions/sms-room/sms-room.component').then((m) => m.SmsRoomComponent),
     canMatch:[authGuard],
   },
