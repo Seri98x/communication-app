@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -16,22 +16,30 @@ export class EmailService {
     return this.http.get(`${this.apiUrl}/list`);
   }
 
-  tryFetchEmails(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/try-list`);
-    
+  tryFetchEmails(userId:string): Observable<any> {
+ // Use HttpParams to append the query parameter
+ const params = new HttpParams().set('userId', userId);
+
+ return this.http.get<any>(`${this.apiUrl}/try-list`, { params });
   }
 
   // Send an email through the backend
-  sendEmail(email: any): Observable<any> {
-    const formData = new FormData();
-    formData.append('to', email.to);
-    formData.append('subject', email.subject);
-    formData.append('message', email.message);
+  sendEmail(emailData: {
+    user: string,
+    pass: string,
+    from: string,
+    to: string,
+    subject: string,
+    text: string,
+    html: string,
+    attachments?: Array<{ filename: string, path?: string, content?: any }>
+  }): Observable<any> {
+    // Set headers if necessary, for example, for JSON content
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
 
-    if (email.attachment) {
-      formData.append('attachment', email.attachment);
-    }
-
-    return this.http.post(`${this.apiUrl}/send`, formData);
+    // POST request to backend API
+    return this.http.post(`${this.apiUrl}/send-email`, emailData, { headers });
   }
 }

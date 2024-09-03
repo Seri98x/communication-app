@@ -11,27 +11,50 @@ import {IonContent, IonHeader, IonTitle, IonButton, IonToolbar, IonButtons, IonC
 })
 export class EmailModalComponent {
   @Input() email: any;
+  @Input() modalController: any;
 
   constructor() {}
 
   dismiss() {
-    // Method to close the modal
+    this.modalController.dismiss();
   }
 
   getAttachmentUrl(base64Data: string, filename: string): string {
-    // Decode base64 data to binary
-    const binaryString = window.atob(base64Data);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    
-    for (let i = 0; i < len; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    
-    // Create a Blob from the binary data
-    const blob = new Blob([bytes], { type: 'application/octet-stream' });
-    
-    // Create a URL for the Blob
-    return URL.createObjectURL(blob);
+    const mimeType = this.getMimeType(filename);
+        const blob = this.base64toBlob(base64Data, mimeType);
+        return URL.createObjectURL(blob);
   }
+
+  // Determine the MIME type based on the file extension
+  getMimeType(filename: string): string {
+    const ext = filename.split('.').pop()?.toLowerCase();
+    switch (ext) {
+      case 'txt': return 'text/plain';
+      case 'jpg': return 'image/jpeg';
+      case 'png': return 'image/png';
+      case 'pdf': return 'application/pdf';
+      default: return 'application/octet-stream';
+    }
+  }
+
+   base64toBlob(base64Data: string, contentType: string = ''): Blob {
+    const sliceSize = 1024;
+    const byteCharacters =  atob(base64Data.replace(/-/g, "+").replace(/_/g, "/"));
+    const bytesLength = byteCharacters.length;
+    const slicesCount = Math.ceil(bytesLength / sliceSize);
+    const byteArrays: Uint8Array[] = new Array(slicesCount);
+
+    for (let sliceIndex = 0; sliceIndex < slicesCount; ++sliceIndex) {
+        const begin = sliceIndex * sliceSize;
+        const end = Math.min(begin + sliceSize, bytesLength);
+
+        const bytes = new Array(end - begin);
+        for (let offset = begin, i = 0; offset < end; ++i, ++offset) {
+            bytes[i] = byteCharacters[offset].charCodeAt(0);
+        }
+        byteArrays[sliceIndex] = new Uint8Array(bytes);
+    }
+    return new Blob(byteArrays, { type: contentType });
+}
+
 }

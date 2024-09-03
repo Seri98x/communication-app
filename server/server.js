@@ -1,203 +1,188 @@
+// server.js or app.js
+
 const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const multer = require('multer');
 const { google } = require('googleapis');
-const auth = require('./auth'); // Import your auth module
-const fs = require('fs').promises; // Use fs.promises for async file operations
+const fs = require('fs').promises;
 const app = express();
 const port = 3001;
-const { authorize} = require('./auth'); // Correctly destructure the import
 
-const {getMails , sendEmail,getMailMessage} = require('./gmailService');
+let auths = [];
+app.use(express.json({limit: '50mb', extended: true}));
+app.use(express.urlencoded({limit: "50mb", extended: true, parameterLimit:50000}));
 
-// Set up multer for handling file uploads
+const { authorize } = require('./auth');
+const {  sendEmail } = require('./emailService');
+const { getMails,getMailMessage,getAttachment} = require('./gmailService');
+
 const upload = multer({ storage: multer.memoryStorage() });
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Serve static files from the build directory
 app.use(express.static(path.join(__dirname, '../www')));
 
-// Redirect to Google OAuth2 consent screen
-app.get('/auth', (req, res) => {
-  const url = auth.getAuthUrl();
-  res.redirect(url);
+app.get('/api/update-credentials', async (req, res) => {
+    await updateCredentials();
+    res.send('Credentials updated successfully');
 });
 
-const TOKEN_PATH = path.join(__dirname, 'token.json');
-const CREDENTIALS_PATH = path.join(__dirname, 'credentials.json');
+app.get('/oauth2callback', async (req, res) => {
+    const { code, clientId, clientSecret, redirectUris, userId } = req.query;
 
-
-const updateCredentials = async () => {
-    const newCredentials = {
-      web: {
-        client_id: "108205539127-jd3tspjcmfl33o8sca91uqjgmhe84g41.apps.googleusercontent.com",
-        project_id: "tonal-griffin-433815-i1",
-        auth_uri: "https://accounts.google.com/o/oauth2/auth",
-        token_uri: "https://oauth2.googleapis.com/token",
-        auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-        client_secret: "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",
-        redirect_uris: ["http://localhost:3000/oauth2callback"]
-      }
-    };
-  
-    try {
-      await fs.writeFile(CREDENTIALS_PATH, JSON.stringify(newCredentials, null, 2), 'utf8');
-      console.log('Credentials updated successfully');
-    } catch (err) {
-      console.error('Error updating credentials:', err);
+    if (!code || !clientId || !clientSecret || !redirectUris || !userId) {
+        return res.status(400).send('Missing required parameters');
     }
-  };
 
+    const oauth2Client = new google.auth.OAuth2(
+        clientId,
+        clientSecret,
+        redirectUris.split(',')[0] 
+    );
 
-app.get('/api/update-credentials', async (req, res) => {
-    // const { clientId, clientSecret, projectId, redirectUris } = req.body;
-  
-    // if (!clientId || !clientSecret || !projectId || !redirectUris) {
-    //   return res.status(400).send('Missing required fields');
-    // }
-  
-    // const newCredentials = {
-    //   web: {
-    //     client_id: clientId,
-    //     project_id: projectId,
-    //     auth_uri: 'https://accounts.google.com/o/oauth2/auth',
-    //     token_uri: 'https://oauth2.googleapis.com/token',
-    //     auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs',
-    //     client_secret: clientSecret,
-    //     redirect_uris: [redirectUris]
-    //   }
-    // };
-  
-    // try {
-    //   await fs.writeFile(CREDENTIALS_PATH, JSON.stringify(newCredentials, null, 2), 'utf8');
-    //   res.send('Credentials updated successfully');
-    // } catch (err) {
-    //   console.error('Error updating credentials:', err);
-    //   res.status(500).send('Failed to update credentials');
-    // }
-    await updateCredentials();
-  });
+    try {
+        const { tokens } = await oauth2Client.getToken(code);
+        oauth2Client.setCredentials(tokens);
+
+        userCredentials.push({
+            userId,
+            token: tokens,
+            oauth2Client
+        });
+
+        res.redirect('/home');
+    } catch (error) {
+        console.error('Error exchanging code for tokens:', error);
+        res.status(500).send('Authorization failed');
+    }
+});
+
+app.post('/api/authenticate', async (req, res) => {
+    const { userId } = req.body;
+
+    // Check if the userId already exists in the auths array
+    const existingAuth = auths.find(auth => auth.userId === userId);
+
+    if (!existingAuth) {
+        try {
+            // Authorize the user and add to auths array if not already present
+            const auth = await authorize(userId);
+            auths.push({ userId: userId, auth: auth });
+
+            // Send a success response
+            return res.json({ userId: userId, auth: auth });
+        } catch (error) {
+            // Handle potential errors
+            return res.status(500).json({ message: 'Error during authentication', error: error.message });
+        }
+    }
+
+    // If userId exists, just end the request
+    return res.json({ message: 'User already authenticated' });
+});
 
 
 app.get('/api/try-list', async (req, res) => {
     try {
-      // Authorize and get OAuth2 client
-      const auth = await authorize();
+
+        const { userId } = req.query;
+
+
+        const { authEntry } = auths.find(auth => auth.userId === userId);
   
-      // Fetch the list of email IDs
-      const allMails = await getMails(auth);
-  
-      // Check if getMails returned any messages
-      if (!allMails || allMails.length === 0) {
-        return res.status(404).send('No messages found');
-      }
-  
-      // Retrieve details for each email ID
-      const messages = await Promise.all(
-        allMails.map(async ({ id }) => {
-          try {
-            return await getMailMessage(auth, id);
-          } catch (error) {
-            console.error(`Error retrieving message ${id}:`, error);
-            return null;
-          }
-        })
-      );
-  
-      const filteredMessages = messages.filter(msg => msg !== null);
-  
-      // Return the results
-      res.json(filteredMessages);
-      console.log(filteredMessages);
-  
+        // const authEntry = auths.find(auth => auth.userId === userId);
+        // const { auth } = authEntry; 
+        // console.log(auth);
+        const authz = await authorize(userId);
+        const allMails = await getMails(authz);
+       
+
+        if (!allMails || allMails.length === 0) {
+            return res.status(404).send('No messages found');
+        }
+
+        const messages = await Promise.all(
+            allMails.map(async ({ id }) => {
+                try {
+                    return await getMailMessage(authz, id);
+                } catch (error) {
+                    console.error(`Error retrieving message ${id}:`, error);
+                    return null;
+                }
+            })
+        );
+
+        const filteredMessages = messages.filter(msg => msg !== null);
+        res.json(filteredMessages);
     } catch (error) {
-      console.error('Error in /api/try-list:', error);
-      res.status(500).send('Error occurred');
+        console.error('Error in /api/try-list:', error);
+        res.status(500).send('Error occurred');
     }
-  });
-
-// Route to check authentication
+    });
 app.get('/api/check-auth', (req, res) => {
-  const token = req.cookies.token;
-  if (token) {
-    res.json({ authenticated: true });
-  } else {
-    res.json({ authenticated: false });
-  }
+    const token = req.cookies.token;
+    if (token) {
+        res.json({ authenticated: true });
+    } else {
+        res.json({ authenticated: false });
+    }
 });
 
-// Route to send an email
-app.post('/api/send', upload.single('attachment'), async (req, res) => {
-  const token = JSON.parse(req.cookies.token || '{}');
-  if (!token.access_token) {
-    return res.status(401).send('Not authenticated');
-  }
+app.get('/api/get-attachments', async (req, res) => {
+    const { userId,messageId,attachmentId } = req.query;
+    const authz = await authorize(userId);
 
-  const { to, subject, message } = req.body;
-  const attachment = req.file ? req.file.buffer.toString('base64') : '';
-
-  const gmail = google.gmail({ version: 'v1', auth: token.access_token });
-
-  const rawMessageParts = [
-    `To: ${to}`,
-    `Subject: ${subject}`,
-    '',
-    message
-  ];
-
-  if (attachment) {
-    rawMessageParts.push(`--boundary`);
-    rawMessageParts.push(`Content-Type: application/octet-stream`);
-    rawMessageParts.push(`Content-Disposition: attachment; filename="attachment"`);
-    rawMessageParts.push('');
-    rawMessageParts.push(attachment);
-    rawMessageParts.push('--boundary--');
-  }
-
-  const rawMessage = rawMessageParts.join('\n');
-  const encodedMessage = Buffer.from(rawMessage).toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
-
-  try {
-    await gmail.users.messages.send({
-      userId: 'me',
-      requestBody: { raw: encodedMessage }
-    });
-    res.send('Email sent successfully!');
-  } catch (error) {
-    console.error('Error sending email:', error);
-    res.status(500).send('Failed to send email');
-  }
+    try {
+        const attachments = await getAttachment(authz, messageId,attachmentId);
+        res.json(attachments);
+    } catch (error) {
+        console.error('Error fetching attachments:', error);
+        res.status(500).send('Failed to fetch attachments');
+    }
 });
 
-// Route to list emails
 app.get('/api/list', async (req, res) => {
-  const token = JSON.parse(req.cookies.token || '{}');
-  if (!token.access_token) {
-    return res.status(401).send('Not authenticated');
-  }
+    const token = JSON.parse(req.cookies.token || '{}');
+    if (!token.access_token) {
+        return res.status(401).send('Not authenticated');
+    }
 
-  const gmail = google.gmail({ version: 'v1', auth: token.access_token });
+    const gmail = google.gmail({ version: 'v1', auth: token.access_token });
 
-  try {
-    const response = await gmail.users.messages.list({
-      userId: 'me',
-      maxResults: 10
-    });
-    const messages = response.data.messages;
-    res.json(messages);
-  } catch (error) {
-    console.error('Error listing emails:', error);
-    res.status(500).send('Failed to list emails');
-  }
+    try {
+        const response = await gmail.users.messages.list({
+            userId: 'me',
+            maxResults: 10
+        });
+        const messages = response.data.messages;
+        res.json(messages);
+    } catch (error) {
+        console.error('Error listing emails:', error);
+        res.status(500).send('Failed to list emails');
+    }
+});
+
+// Updated route to send an email with optional attachments
+app.post('/api/send-email', async (req, res) => {
+    const { user, pass, from, to, subject, text, html, attachments } = req.body;
+
+    if (!user || !pass || !from || !to || !subject || !text || !html) {
+        return res.status(400).json('Missing required fields');
+    }
+
+    try {
+        await sendEmail({ user, pass, from, to, subject, text, html, attachments });
+        res.status(200).json('Email sent successfully');
+        
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+
+    }
 });
 
 app.listen(port, () => {
-  console.log(`Server listening at http://localhost:${port}`);
+    console.log(`Server listening at http://localhost:${port}`);
 });
