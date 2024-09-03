@@ -11,7 +11,7 @@
   <ion-card>
     <ion-card-header>
       <ion-card-title>{{ email.subject }}</ion-card-title>
-      <ion-card-subtitle>{{ email.body }}</ion-card-subtitle>
+      <div [innerHTML]="email.plainTextBody"></div>
       <ion-card-subtitle>From: {{ email.sender }}</ion-card-subtitle>
       <ion-card-subtitle>Date: {{ email.date }}</ion-card-subtitle>
     </ion-card-header>

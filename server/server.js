@@ -91,7 +91,7 @@ app.get('/api/try-list', async (req, res) => {
         const { userId } = req.query;
 
 
-        const { authEntry } = auths.find(auth => auth.userId === userId);
+        // const { authEntry } = auths.find(auth => auth.userId === userId);
   
         // const authEntry = auths.find(auth => auth.userId === userId);
         // const { auth } = authEntry; 
