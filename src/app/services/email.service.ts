@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
 })
 export class EmailService {
 
-  private apiUrl = 'http://localhost:3001/api'; // Adjust if your backend is hosted elsewhere
+  private apiUrl = 'http://localhost:3000/api'; // Adjust if your backend is hosted elsewhere
 
   constructor(private http: HttpClient) { }
 

@@ -7,11 +7,33 @@ const multer = require('multer');
 const { google } = require('googleapis');
 const fs = require('fs').promises;
 const app = express();
-const port = 3001;
+const port = 3000;
+const twilio = require('twilio');
+const bodyParser = require('body-parser');
+const WebSocket = require('ws');
+const cors = require('cors');
+
+
 
 let auths = [];
+let messages = [];
+
+const wss = new WebSocket.Server({ noServer: true });
+
+wss.on('connection', ws => {
+    console.log('WebSocket connection established');
+    ws.on('message', message => {
+        console.log('Received:', message);
+    });
+});
 app.use(express.json({limit: '50mb', extended: true}));
 app.use(express.urlencoded({limit: "50mb", extended: true, parameterLimit:50000}));
+const accountSid = 'ACeb4a616a31d55af05478c9e5c8d048e5'; // Replace with your Twilio Account SID
+const authToken = '6f8d4324a010835220a996ffc7869a23';   // Replace with your Twilio Auth Token
+const twilioNumber = '+12173936128'; // Replace with your Twilio phone number
+
+const client = twilio(accountSid, authToken);
+
 
 const { authorize } = require('./auth');
 const {  sendEmail } = require('./emailService');
@@ -20,8 +42,10 @@ const { getMails,getMailMessage,getAttachment} = require('./gmailService');
 const upload = multer({ storage: multer.memoryStorage() });
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(cors()); // Enable CORS
+
 
 app.use(express.static(path.join(__dirname, '../www')));
 
@@ -29,6 +53,30 @@ app.get('/api/update-credentials', async (req, res) => {
     await updateCredentials();
     res.send('Credentials updated successfully');
 });
+
+
+
+app.get('/api/messages', async (req, res) => {
+    try {
+        const messages = await client.messages.list({
+            to: twilioNumber, // Filter messages where 'to' is your Twilio number
+            limit: 20 // Adjust the number of messages as needed
+        });
+
+        const formattedMessages = messages.map(message => ({
+            from: message.from,
+            to: message.to,
+            body: message.body,
+            timestamp: message.dateCreated.toISOString() // Convert to ISO string
+        }));
+
+        res.json(formattedMessages);
+    } catch (error) {
+        console.error('Error fetching messages from Twilio:', error);
+        res.status(500).send('Error fetching messages');
+    }
+});
+
 
 app.get('/oauth2callback', async (req, res) => {
     const { code, clientId, clientSecret, redirectUris, userId } = req.query;
@@ -80,9 +128,81 @@ app.post('/api/authenticate', async (req, res) => {
         }
     }
 
+    
+
     // If userId exists, just end the request
     return res.json({ message: 'User already authenticated' });
 });
+
+app.post('/api/send-sms', async (req, res) => {
+    const { to, body } = req.body;
+
+    try {
+        const message = await client.messages.create({
+            body,
+            from: twilioNumber,
+            to
+        });
+
+        res.json(message);
+    } catch (error) {
+        console.error('Error sending SMS:', error);
+        res.status(500).send('Error sending SMS');
+    }
+});
+
+
+app.post('/api/sms', (req, res) => {
+    const from = req.body.From;
+    const to = req.body.To;
+    const body = req.body.Body;
+    
+    // Get the current date and time
+    const timestamp = new Date().toISOString(); // ISO 8601 format: YYYY-MM-DDTHH:mm:ss.sssZ
+
+    // Store the message
+    messages.push({ from, to, body, timestamp });
+
+    // Notify all WebSocket clients
+    wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({ from, to, body, timestamp }));
+        }
+    });
+
+    res.send('<Response><Message>Thank you for your message!</Message></Response>');
+});
+
+
+app.post('/api/incoming-call', (req, res) => {
+    const { From, To, CallSid } = req.body;
+
+    console.log(`Incoming call from: ${From}`);
+    console.log(`To: ${To}`);
+    console.log(`Call SID: ${CallSid}`);
+
+    // Generate TwiML response
+    const twiml = new twilio.twiml.VoiceResponse();
+
+    // Example prompt: say a message and gather input
+    twiml.say('Hello! Thank you for calling. Please press 1 to proceed or 2 to leave a message.');
+
+    // Gather user input (optional)
+    const gather = twiml.gather({
+        numDigits: 1,
+        action: '/api/process-input'  // Endpoint to handle user input
+    });
+    
+    gather.say('Please make a selection.');
+
+    // If no input is received, redirect to the same endpoint to ask again
+    twiml.redirect('/api/incoming-call');
+
+    // Set content type and send TwiML response
+    res.type('text/xml');
+    res.send(twiml.toString());
+});
+
 
 
 app.get('/api/try-list', async (req, res) => {
@@ -183,6 +303,13 @@ app.post('/api/send-email', async (req, res) => {
     }
 });
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
     console.log(`Server listening at http://localhost:${port}`);
+
+});
+
+server.on('upgrade', (request, socket, head) => {
+    wss.handleUpgrade(request, socket, head, ws => {
+        wss.emit('connection', ws, request);
+    });
 });

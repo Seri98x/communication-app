@@ -10,7 +10,7 @@ import { HttpClient } from '@angular/common/http';
 })
 export class AuthService {
 
-  private apiUrl = 'http://localhost:3001/api'; // Adjust if your backend is hosted elsewhere
+  private apiUrl = 'http://localhost:3000/api'; // Adjust if your backend is hosted elsewhere
 
  
   public _uid = new BehaviorSubject<any>(null);  
