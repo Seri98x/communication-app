@@ -12,11 +12,20 @@ const twilio = require('twilio');
 const bodyParser = require('body-parser');
 const WebSocket = require('ws');
 const cors = require('cors');
+const {voiceResponse,tokenGenerator} =  require('./helper');
+const $ = require('jquery'); // Import jQuery here
+const axios = require('axios'); // Import axios
+
+
 
 
 
 let auths = [];
 let messages = [];
+
+let device;
+let token;
+
 
 const wss = new WebSocket.Server({ noServer: true });
 
@@ -53,6 +62,87 @@ app.get('/api/update-credentials', async (req, res) => {
     await updateCredentials();
     res.send('Credentials updated successfully');
 });
+
+
+async function startupClient() {
+
+    try {
+     const tokenGet = tokenGenerator();
+      token = tokenGet.token;
+      intitializeDevice();
+    } catch (err) {
+      console.log(err);
+
+    }
+  }
+
+function intitializeDevice() {
+    device = new Twilio.Device(token, {
+      logLevel:1,
+      // Set Opus as our preferred codec. Opus generally performs better, requiring less bandwidth and
+      // providing better audio quality in restrained network conditions.
+      codecPreferences: ["opus", "pcmu"],
+    });
+
+    addDeviceListeners(device);
+
+    // Device must be registered in order to receive incoming calls
+    device.register();
+  }
+
+
+  function addDeviceListeners(device) {
+    device.on("registered", function () {
+    });
+
+    device.on("error", function (error) {
+    });
+
+    device.on("incoming", handleIncomingCall);
+
+  }
+
+
+  async function makeOutgoingCall() {
+    var params = {
+      // get the phone number to call from the DOM
+      To: phoneNumberInput.value,
+    };
+
+    if (device) {
+
+      // Twilio.Device.connect() returns a Call object
+      const call = await device.connect({ params });
+      outgoingCallHangupButton.onclick = () => {
+        call.disconnect();
+      };
+
+    } else {
+    }
+  }
+
+
+  app.post('/api/initiate-device', async (req, res) => {
+    await startupClient();
+    res.send('Device initialized');
+  });
+
+  app.post('/api/make-call', async (req, res) => {
+    const { phoneNumber } = req.body;
+    makeOutgoingCall(phoneNumber);   
+});
+
+
+
+
+app.get('/api/get-token', (req, res) => {
+    token = tokenGenerator();
+    res.json({ token });
+
+
+    });
+
+
 
 
 
@@ -284,6 +374,11 @@ app.get('/api/list', async (req, res) => {
         res.status(500).send('Failed to list emails');
     }
 });
+
+app.post("/api/voice", (req, res) => {
+    res.set("Content-Type", "text/xml");
+    res.send(voiceResponse(req.body));
+  });
 
 // Updated route to send an email with optional attachments
 app.post('/api/send-email', async (req, res) => {

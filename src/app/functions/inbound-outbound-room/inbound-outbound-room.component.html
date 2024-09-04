@@ -7,10 +7,19 @@
   </ion-toolbar>
 </ion-header>
 
+
 <ion-content fullscreen="true">
+
+  <div class="custom-alert hide">
+   <button #buttonAlert id="button-accept" >Accept</button>
+    <button >Reject</button>
+    <button >Hang Up</button>
+  </div>
+
   <div class="container">
     <ion-card class="dialer">
       <ion-card-content>
+
         <ion-input [(ngModel)]="phoneNumber" placeholder="Enter number" type="text" readonly></ion-input>
         <ion-grid>
           <ion-row>
@@ -66,8 +75,12 @@
             </ion-col>
           </ion-row>
         </ion-grid>
-        <ion-button expand="full" color="primary" class="call-button">Call</ion-button>
+        <ion-button expand="full" color="primary" (click)="makeCall()">Call</ion-button>
       </ion-card-content>
+      
     </ion-card>
   </div>
+ 
 </ion-content>
+
+
