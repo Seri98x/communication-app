@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, Renderer2 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { send, attachOutline } from 'ionicons/icons';
@@ -17,20 +17,43 @@ import { getDownloadURL, getStorage, ref } from '@angular/fire/storage';
   styleUrls: ['./chat-room.component.scss'],
   imports: [IonLabel, IonItemGroup, IonList, ChatBoxComponent, IonTitle, IonBackButton, IonSpinner, IonFabButton, IonFab, FormsModule, CommonModule, IonTextarea, IonText, IonButtons, IonInput, IonItem, IonRow, IonToolbar, IonFooter, IonIcon, IonButton, IonCol, IonContent, IonHeader]
 })
+
 export class ChatRoomComponent implements OnInit, OnDestroy {
   isAttached: boolean = false;
   fileName: string = '';
-  
+  @ViewChild('chatContainer', { static: false }) public chatContainer?: IonContent;
+
 onFileSelected($event: Event) {
      const file = ($event.target as HTMLInputElement).files?.[0];
       if (file) {
         this.isAttached = true;
         this.fileName = file.name;
         this.selectedFile = file;
-        console.log(this.selectedFile);
+ 
       
       }
 }
+
+
+
+
+ngAfterViewChecked() {
+  this.chatContainer?.scrollToBottom(200);
+}
+
+
+ngAfterViewInit(): void {
+  this.chatContainer = this.el.nativeElement.querySelector('.chat-container');
+  this.chatContainer?.scrollToBottom(200);
+}
+
+private scrollToBottom(): void {
+  
+}
+
+
+
+
   messages: any[] = [];
   isLoading: boolean = false;
   currentUserId: string = '';
@@ -38,7 +61,7 @@ onFileSelected($event: Event) {
   unsubscribe: () => void = () => {};
   selectedFile: File | null = null;
 
-  constructor(private chatService: ChatService, private authService: AuthService) {
+  constructor(private chatService: ChatService, private authService: AuthService,private renderer: Renderer2, private el: ElementRef) {
     this.authService._uid.subscribe((user_id) => {
       this.currentUserId = user_id;
     });
@@ -73,6 +96,7 @@ onFileSelected($event: Event) {
       this.selectedFile = null; // Clear file selection
     });
   }
+  this.chatContainer?.scrollToBottom(400);
 }
 
 async downloadFile(fileUrl: string) {

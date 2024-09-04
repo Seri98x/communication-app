@@ -56,7 +56,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors()); // Enable CORS
 
 
-app.use(express.static(path.join(__dirname, '../www')));
 
 app.get('/api/update-credentials', async (req, res) => {
     await updateCredentials();
@@ -146,27 +145,33 @@ app.get('/api/get-token', (req, res) => {
 
 
 
-app.get('/api/messages', async (req, res) => {
-    try {
-        const messages = await client.messages.list({
-            to: twilioNumber, // Filter messages where 'to' is your Twilio number
-            limit: 20 // Adjust the number of messages as needed
-        });
-
-        const formattedMessages = messages.map(message => ({
-            from: message.from,
-            to: message.to,
-            body: message.body,
-            timestamp: message.dateCreated.toISOString() // Convert to ISO string
-        }));
-
-        res.json(formattedMessages);
-    } catch (error) {
-        console.error('Error fetching messages from Twilio:', error);
-        res.status(500).send('Error fetching messages');
-    }
-});
-
+    app.get('/api/messages', async (req, res) => {
+        try {
+            const messages = await client.messages.list({
+                to: twilioNumber, // Filter messages where 'to' is your Twilio number
+                limit: 20 // Adjust the number of messages as needed
+            });
+    
+            const formattedMessages = await Promise.all(messages.map(async (message) => {
+                // Fetch media for each message
+                const mediaList = await client.messages(message.sid).media.list();
+                const mediaUrls = mediaList.map(media => media.uri);
+    
+                return {
+                    from: message.from,
+                    to: message.to,
+                    body: message.body,
+                    timestamp: message.dateCreated.toISOString(), // Convert to ISO string
+                    media: mediaUrls // List of media URLs
+                };
+            }));
+    
+            res.json(formattedMessages);
+        } catch (error) {
+            console.error('Error fetching messages from Twilio:', error);
+            res.status(500).send('Error fetching messages');
+        }
+    });
 
 app.get('/oauth2callback', async (req, res) => {
     const { code, clientId, clientSecret, redirectUris, userId } = req.query;
@@ -225,13 +230,14 @@ app.post('/api/authenticate', async (req, res) => {
 });
 
 app.post('/api/send-sms', async (req, res) => {
-    const { to, body } = req.body;
+    const { to, body,mediaUrl } = req.body;
 
     try {
         const message = await client.messages.create({
             body,
             from: twilioNumber,
-            to
+            to,
+            mediaUrl: mediaUrl
         });
 
         res.json(message);
@@ -376,6 +382,7 @@ app.get('/api/list', async (req, res) => {
 });
 
 app.post("/api/voice", (req, res) => {
+    console.log(req.body);
     res.set("Content-Type", "text/xml");
     res.send(voiceResponse(req.body));
   });
@@ -397,6 +404,12 @@ app.post('/api/send-email', async (req, res) => {
 
     }
 });
+
+app.use(express.static(path.join(__dirname, '../www')));
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../www/index.html'));
+});
+
 
 const server = app.listen(port, () => {
     console.log(`Server listening at http://localhost:${port}`);

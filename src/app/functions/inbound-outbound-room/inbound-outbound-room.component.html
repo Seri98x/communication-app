@@ -10,11 +10,35 @@
 
 <ion-content fullscreen="true">
 
-  <div class="custom-alert hide">
-   <button #buttonAlert id="button-accept" >Accept</button>
-    <button >Reject</button>
-    <button >Hang Up</button>
-  </div>
+
+
+
+
+    
+
+
+  <ion-alert
+  [isOpen]="isAlertOpen"
+  header="Outbound Call"
+  [buttons]="alertButtons"
+  (didDismiss)="setOpen(false)"
+></ion-alert>
+
+<ion-alert
+[isOpen]="isAlertOpen2"
+header="Incoming Call"
+[buttons]="alertButtons2"
+(didDismiss)="setOpen2(false)"
+></ion-alert>
+
+
+<ion-alert
+[isOpen]="isAlertOpen3"
+header="Incoming Call"
+[buttons]="alertButtons3"
+(didDismiss)="setOpen3(false)"
+></ion-alert>
+
 
   <div class="container">
     <ion-card class="dialer">
@@ -75,7 +99,7 @@
             </ion-col>
           </ion-row>
         </ion-grid>
-        <ion-button expand="full" color="primary" (click)="makeCall()">Call</ion-button>
+        <ion-button  color="primary" (click)="makeCall()">Call</ion-button>
       </ion-card-content>
       
     </ion-card>

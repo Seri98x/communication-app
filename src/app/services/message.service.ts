@@ -21,7 +21,7 @@ export class MessageService {
     return this.http.get<Message[]>(this.apiUrl+"messages");
   }
 
-  sendSms(to: string, body: string): Observable<any> {
-    return this.http.post<any>(this.apiUrl+"send-sms", { to, body });
+  sendSms(to: string, body: string,mediaUrl:string): Observable<any> {
+    return this.http.post<any>(this.apiUrl+"send-sms", { to, body,mediaUrl });
   }
 }

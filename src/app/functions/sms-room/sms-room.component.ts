@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { MessageService } from 'src/app/services/message.service';
 import { addIcons } from "ionicons";
 import { WebSocketService } from 'src/app/services/websocket.service';
+import { ChatService } from 'src/app/services/chat.service';
 
 @Component({
   selector: 'app-sms-room',
@@ -14,12 +15,25 @@ import { WebSocketService } from 'src/app/services/websocket.service';
   imports: [FormsModule,CommonModule,IonTextarea, IonButton, IonText, IonInput, IonList, IonCardTitle, IonCardContent, IonLabel, IonItem, IonCardHeader, IonCard, IonCol, IonGrid, IonRow, IonTitle, IonBackButton, IonButtons, IonToolbar, IonHeader, IonContent]
 })
 export class SmsRoomComponent  implements OnInit {
+  public file : File | null = null;
 onFileSelected($event: Event) {
-throw new Error('Method not implemented.');
+  this.file = ($event.target as HTMLInputElement).files?.[0] || null;
+
+  
 }
-sendSMS(): void {
+  async sendSMS(): Promise<void> {
   if (this.to && this.body) {
-    this.messageService.sendSms(this.to, this.body).subscribe(
+
+
+
+ 
+      let fileUrl = await this.chatService.uploadFile(this.file!);
+    
+       
+
+
+
+    this.messageService.sendSms(this.to, this.body,fileUrl).subscribe(
       response => {
         console.log('SMS sent successfully:', response);
         // Optionally clear input fields
@@ -38,7 +52,7 @@ messages: any[] = [];
 to: string = '';
 body: string = '';
 
-  constructor(private messageService: MessageService,private webSocketService: WebSocketService) 
+  constructor(private messageService: MessageService,private webSocketService: WebSocketService,private chatService: ChatService) 
   {
   
    }
