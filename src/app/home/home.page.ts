@@ -28,7 +28,7 @@ logout() {
    this.authService._user_name.subscribe((name) => {
       this.name = name;
     });
-    addIcons({homeOutline,callOutline,chatbubblesOutline,mailOutline,chatboxEllipsesOutline});
+    addIcons({homeOutline,chatbubblesOutline,mailOutline,chatboxEllipsesOutline,callOutline});
   }
 
   showCard: boolean = true;

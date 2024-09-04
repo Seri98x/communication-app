@@ -1,0 +1,47 @@
+.dialer-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    --padding-start: 0;
+    --padding-end: 0;
+    --padding-top: 0;
+    --padding-bottom: 0;
+  }
+  ion-card {
+    width: 100%;
+    max-width: 400px; /* Adjust the max-width as needed */
+    margin: 20px auto; /* Center the card and add margin */
+  }
+  ion-card-content {
+    padding: 16px; /* Add padding inside the card */
+  }
+
+  .dialer {
+    height: 350px;
+    align-self: center;
+  }
+
+
+  .container {
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    height: 100vh;
+  }
+
+  .dialer-content {
+    --padding-start: 0;
+    --padding-end: 0;
+    --padding-top: 0;
+    --padding-bottom: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  
+
+  
+  .call-button {
+    margin-top: 16px; /* Adds space between the card and the call button */
+  }

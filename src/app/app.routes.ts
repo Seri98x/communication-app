@@ -29,7 +29,7 @@ export const routes: Routes = [
     canMatch:[authGuard],
   },
   {
-    path: 'home/call/',
+    path: 'home/voice-call',
     loadComponent: () => import('./functions/inbound-outbound-room/inbound-outbound-room.component').then((m) => m.InboundOutboundRoomComponent),
     canMatch:[authGuard],
    },
